@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./styles/styles.css">
+
+    <title>Simulacro Segundo Parcial</title>
+</head>
+
+<body>
+    <section id="form-datos">
+        <h1>Listado de Persona</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th class="col-id">ID</th>
+                    <th class="col-nombre">Nombre</th>
+                    <th class="col-apellido">Apellido</th>
+                    <th class="col-fechaNacimiento">Fecha de Nacimiento</th>
+                    <th class="col-dni">DNI</th>
+                    <th class="col-paisOrigen">Pais de origen</th>
+                    <th class="col-modificar">Modificar</th>
+                    <th class="col-eliminar">Eliminar</th>
+                </tr>
+            </thead>
+
+            <tbody id="tbody-persona">
+                <!-- Las filas se agregarán dinámicamente aquí -->
+            </tbody>
+        </table>
+
+        <button class="btnAgregar" id="btnAgregar">Agregar</button>
+    </section>
+
+    <section id="form-abm" style="display: none;">
+        <h2 id="accion-titulo">Formulario de Alta:</h2>
+
+        <div class="input-group">
+            <label for="selectTipo">Tipo:</label>
+            <select name="selectTipo" id="selectTipo">
+                <option value="Ciudadano">Ciudadano</option>
+                <option value="Extranjero">Extranjero</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label for="txtId">ID:</label>
+            <input type="text" name="txtId" id="txtId" disabled>
+        </div>
+
+        <div class="input-group">
+            <label for="txtNombre">Nombre:</label>
+            <input type="text" name="txtNombre" id="txtNombre">
+        </div>
+
+        <div class="input-group">
+            <label for="txtApellido">Apellido:</label>
+            <input type="text" name="txtApellido" id="txtApellido">
+        </div>
+
+        <div class="input-group">
+            <label for="numFechaNacimiento">Fecha de Nacimiento:</label>
+            <input type="number" name="numFechaNacimiento" id="numFechaNacimiento">
+        </div>
+
+        <div class="input-group">
+            <label for="numDni">DNI:</label>
+            <input type="number" name="numDni" id="numDni">
+        </div>
+
+        <div class="input-group">
+            <label for="txtPaisOrigen">Pais de Origen:</label>
+            <input type="number" name="txtPaisOrigen" id="txtPaisOrigen">
+        </div>
+
+        <button type="button" class="btnAceptar" id="btnAceptar">Aceptar</button>
+        <button type="button" class="btnCancelar" id="btnCancelar">Cancelar</button>
+    </section>
+
+    <div id="spinner" style="display: none;">
+        <div class="loader"></div>
+    </div>
+
+    <script type="module" src="./src/app.js"></script>
+</body>
+
+</html>
