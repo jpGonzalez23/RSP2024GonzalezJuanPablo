@@ -226,13 +226,13 @@ async function enviarPut(persona) {
                 return true;
             }
             else {
-                alert("no se pudo enviar: " + url + "\nError: " + response.status);
+                alert(`No se pudo enviar: ${url}\nError: ${response.status}`);
                 modeFormulario();
                 return false;
             }
         })
         .catch(error => {
-            alert(error.message);
+            alert(`Error: ${error.message}`);
             modeFormulario();
             return false;
         });
@@ -240,60 +240,61 @@ async function enviarPut(persona) {
 
 function modificar(persona) {
     mostrarSpinner();
+    
+    let nombre = document.getElementById("txtNombre").value;
+    let apellido = document.getElementById("txtApellido").value;
+    let fechaNacimiento = document.getElementById("numFechaNacimiento").value;
+
+    if (!validarCampos(nombre, apellido, fechaNacimiento)) {
+        ocultarSpinner();
+        return;
+    }
+
+    if (document.getElementById("selectTipo").value === "Ciudadano") {
+        let dni = document.getElementById("numDni").value;
+
+        if(!validarCiudadano(dni)) {
+            ocultarSpinner();
+            return;
+        }
+
+        persona.nombre = nombre;
+        persona.apellido = apellido;
+        persona.fechaNacimiento = fechaNacimiento;
+        persona.dni = dni;
+    } else if (document.getElementById("selectTipo").value === "Extranjero") {
+        let paisOrigen = document.getElementById("txtPaisOrigen").value;
+
+        if(!validarExtranjero(paisOrigen)) {
+            ocultarSpinner();
+            return;
+        }
+
+        persona.nombre = nombre;
+        persona.apellido = apellido;
+        persona.fechaNacimiento = fechaNacimiento;
+        persona.paisOrigen = paisOrigen;
+    }
+
     enviarPut(persona)
-        .then(respuesta => {
-            if (respuesta) {
-                let nombre = document.getElementById("txtNombre").value;
-                let apellido = document.getElementById("txtApellido").value;
-                let fechaNacimiento = document.getElementById("numFechaNacimiento").value;
-
-                if (!validarCampos(nombre, apellido, fechaNacimiento)) {
-                    ocultarSpinner();
-                    return;
-                }
-
-                let newPersonar;
-
-                if (document.getElementById("selectTipo").value === "Ciudadano") {
-                    let dni = document.getElementById("numDni").value;
-
-                    if (!validarCiudadano(dni)) {
-                        ocultarSpinner();
-                        return;
-                    }
-                    newPersonar = new Ciudadano(persona.id, nombre, apellido, fechaNacimiento, dni);
-                }
-                else if (document.getElementById("selectTipo").value === "Extranjero") {
-                    let paisOrigen = document.getElementById("txtPaisOrigen").value;
-
-                    if (!validarExtranjero(paisOrigen)) {
-                        ocultarSpinner();
-                        return;
-                    }
-
-                    newPersonar = new Extranjero(persona.id, nombre, apellido, fechaNacimiento, paisOrigen);
-                }
-
+        .then(response => {
+            if (response) {
                 let index = dataPersonas.findIndex(p => p.id === persona.id);
 
-                if (index !== -1) {
-                    dataPersonas[index] = newPersonar;
+                if(index !== -1) {
+                    dataPersonas[index] = persona;
                 }
+
                 modeFormulario();
                 mostrarListado();
-                document.getElementById('btnAceptar').onclick = null;
-            }
-            else {
-                mostrarListado();
-                document.getElementById('btnAceptar').onclick = null;
+            } else {
+                alert("No se pudo modificar la persona");
             }
         })
         .catch(error => {
-            alert(error.message);
-            ocultarSpinner();
-            modeFormulario();
-            mostrarListado();
-        });
+            alert(`Error: ${error.message}`);
+        })
+    
 }
 
 function mostrarEliminacionDeDatos(personaId) {
@@ -341,7 +342,7 @@ async function enviarDelete(personaId) {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({id: personaId})
+            body: JSON.stringify({ id: personaId })
         });
 
         if (response.status === 200) {
