@@ -8,7 +8,7 @@ let modeOperacion = "agregar";
 window.onload = function () {
     document.getElementById("btnAgregar").addEventListener("click", () => modeFormulario("agregar"));
     document.getElementById("btnCancelar").addEventListener("click", () => modeFormulario("cancelar"));
-    document.getElementById('selectTipo').addEventListener('change', () => habiliarCampos);
+    document.getElementById('selectTipo').addEventListener('change', () => habilitarCampos());
     document.getElementById("btnAceptar").addEventListener("click", () => {
         if (modeOperacion === "agregar") alta();
     });
@@ -25,7 +25,7 @@ function ocultarSpinner() {
 
 function modeFormulario(modo = "agregar") {
     mostrarSpinner();
-    habiliarCampos();
+    habilitarCampos();
 
     modeOperacion = modo;
 
@@ -144,64 +144,46 @@ async function enviarPost(persona) {
 
 async function alta() {
     mostrarSpinner();
+    const nombre = document.getElementById("txtNombre").value;
+    const apellido = document.getElementById("txtApellido").value;
+    const fechaNacimiento = document.getElementById("numFechaNacimiento").value;
 
-    let nombre = document.getElementById("txtNombre").value;
-    let apellido = document.getElementById("txtApellido").value;
-    let fechaNacimiento = document.getElementById("numFechaNacimiento").value;
-    let dni;
-    let paisOrigen;
-    let persona;
-
-    if (!validar(nombre, apellido, fechaNacimiento)) {
+    if (!validarCampos(nombre, apellido, fechaNacimiento)) {
         ocultarSpinner();
         return;
     }
 
+    let persona;
     if (document.getElementById("selectTipo").value === "Ciudadano") {
-        dni = document.getElementById("numDni").value;
-        if (!validarCiudadano(dni)) {
+        const dni = document.getElementById("numDni").value;
+        if (!dni) {
+            alert("Debe ingresar un DNI válido.");
             ocultarSpinner();
             return;
         }
-
-        persona = { nombre, apellido, fechaNacimiento, dni };
-        console.log(persona);
-    }
-    else if (document.getElementById("selectTipo").value === "Extranjero") {
-        paisOrigen = document.getElementById("txtPaisOrigen").value;
-        if (!validarExtranjero(paisOrigen)) {
+        persona = new Ciudadano(null, nombre, apellido, fechaNacimiento, dni);
+    } else {
+        const paisOrigen = document.getElementById("txtPaisOrigen").value;
+        if (!paisOrigen) {
+            alert("Debe ingresar un país de origen.");
             ocultarSpinner();
             return;
         }
-
-        persona = { nombre, apellido, fechaNacimiento, paisOrigen };
+        persona = new Extranjero(null, nombre, apellido, fechaNacimiento, paisOrigen);
     }
 
-    let respuesta = await enviarPost(persona);
-
+    const respuesta = await enviarPost(persona);
     if (respuesta) {
         persona.id = respuesta.id;
-
-        if (document.getElementById("selectTipo").value === "Ciudadano") {
-            let ciudadano = new Ciudadano(persona.id, persona.nombre, persona.apellido, persona.fechaNacimiento, persona.dni);
-            dataPersonas.push(ciudadano);
-        }
-        else {
-            let extranjero = new Extranjero(persona.id, persona.nombre, persona.apellido, persona.fechaNacimiento, persona.paisOrigen);
-            dataPersonas.push(extranjero);
-        }
-        modeFormulario();
+        dataPersonas.push(persona);
         mostrarListado();
     }
-    else {
-        ocultarSpinner();
-        modeFormulario();
-        alert("No se pudo agregar la persona");
-    }
+    ocultarSpinner();
+    modeFormulario();
 }
 
 function mostrarModificacionDeDatos(id) {
-    habiliarCampos();
+    habilitarCampos();
     let persona;
 
     dataPersonas.forEach(p => {
@@ -214,7 +196,7 @@ function mostrarModificacionDeDatos(id) {
         document.getElementById("txtId").value = persona.id;
         document.getElementById("txtNombre").value = persona.nombre;
         document.getElementById("numFechaNacimiento").value = persona.fechaNacimiento;
-        
+
         if (persona instanceof Ciudadano) {
             document.getElementById("numDni").value = persona.dni;
         }
@@ -265,7 +247,7 @@ function modificar(persona) {
                 let apellido = document.getElementById("txtApellido").value;
                 let fechaNacimiento = document.getElementById("numFechaNacimiento").value;
 
-                if (!validar(nombre, apellido, fechaNacimiento)) {
+                if (!validarCampos(nombre, apellido, fechaNacimiento)) {
                     ocultarSpinner();
                     return;
                 }
@@ -316,13 +298,14 @@ function modificar(persona) {
 
 function mostrarEliminacionDeDatos(personaId) {
     let persona;
+
     dataPersonas.forEach(p => {
-        if (p.id === id) {
+        if (p.id === personaId) {
             persona = p;
         }
     });
 
-    if(persona) {
+    if (persona) {
         document.getElementById("txtId").value = persona.id;
         document.getElementById("txtNombre").value = persona.nombre;
         document.getElementById("txtNombre").disabled = true;
@@ -330,7 +313,7 @@ function mostrarEliminacionDeDatos(personaId) {
         document.getElementById("txtApellido").disabled = true;
         document.getElementById("numFechaNacimiento").value = persona.fechaNacimiento;
         document.getElementById("numFechaNacimiento").disabled = true;
-        
+
         if (persona instanceof Ciudadano) {
             document.getElementById("numDni").value = persona.dni;
             document.getElementById("numDni").disabled = true;
@@ -352,13 +335,13 @@ function mostrarEliminacionDeDatos(personaId) {
 async function enviarDelete(personaId) {
     try {
         mostrarSpinner();
-        let url = 'https://examenesutn.vercel.app/api/PersonaCiudadanoExtranjero/';
-        let response = await fetch(url,{
+        let url = 'https://examenesutn.vercel.app/api/PersonaCiudadanoExtranjero';
+        let response = await fetch(url, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(personaId)
+            body: JSON.stringify({id: personaId})
         });
 
         if (response.status === 200) {
@@ -374,27 +357,17 @@ async function enviarDelete(personaId) {
         else {
             modeFormulario();
             mostrarListado();
-            alert("no se pudo enviar: " + url + "\nError: " + response.status);
+            alert("Error status no esperado " + response.status);
         }
     }
     catch (error) {
-        alert("Error: " + url + "\nError: " + error.message);
+        alert("Error: " + error.message);
     }
 }
 
-function validar(nombre, apellido, fechaNacimiento) {
-    if (!nombre) {
-        alert("Debe ingresar el nombre");
-        return;
-    }
-
-    if (!apellido) {
-        alert("Debe ingresar el apellido");
-        return;
-    }
-
-    if (isNaN(fechaNacimiento)) {
-        alert("Debe ingresar la fecha de nacimiento");
+function validarCampos(nombre, apellido, fechaNacimiento) {
+    if (!nombre || !apellido || isNaN(fechaNacimiento)) {
+        alert("Todos los campos son obligatorios.");
         return;
     }
 
@@ -419,19 +392,18 @@ function validarExtranjero(paisOrigen) {
     return true;
 }
 
-function habiliarCampos() {
-    let tipo = document.getElementById("selectTipo").value;
-    
+function habilitarCampos() {
+    const tipo = document.getElementById("selectTipo").value;
+
     document.getElementById('txtNombre').disabled = false;
     document.getElementById('txtApellido').disabled = false;
     document.getElementById('numFechaNacimiento').disabled = false;
-    document.getElementById('selectTipo').disabled = false;
 
     if (tipo === "Ciudadano") {
         document.getElementById('numDni').disabled = false;
         document.getElementById('txtPaisOrigen').disabled = true;
         document.getElementById('txtPaisOrigen').value = "";
-    } else if (tipo === "Extranjero") {
+    } else {
         document.getElementById('txtPaisOrigen').disabled = false;
         document.getElementById('numDni').disabled = true;
         document.getElementById('numDni').value = "";
@@ -454,5 +426,5 @@ function limpiarCampos() {
     document.getElementById("numFechaNacimiento").value = "";
     document.getElementById("numDni").value = "";
     document.getElementById("txtPaisOrigen").value = "";
-    habiliarCampos();
+    habilitarCampos();
 }
